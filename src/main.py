@@ -1,90 +1,115 @@
-def _solve_xor(a,b):
-	m=len(a)
-	n=len(a[0])
-	i=0
-	for j in range(0,n):
-		mx=i
-		mx_v=a[i][j]
-		while (mx_v==0):
-			mx+=1
-			if (mx==m):
-				break
-			mx_v=a[mx][j]
-		if (mx_v!=0):
-			for k in range(0,n):
-				t=a[mx][k]
-				a[mx][k]=a[i][k]
-				a[i][k]=t
-			for k in range(i+1,m):
-				for l in range(j+1,n):
-					a[k][l]^=a[i][l]&a[k][j]
-				a[k][j]=0
-			i+=1
-			if (i==m):
-				break
-	o=[0 for _ in range(0,n)]
-	for i in range(0,m):
-		for j in range(0,n):
-			o[j]^=b[i]&a[i][j]
+def bsf(n):
+	o=0
+	while (not (n&1)):
+		n>>=1
+		o+=1
+	return o
+
+
+
+def bsr(n):
+	o=63
+	m=0x8000000000000000
+	while (not (n&m)):
+		m>>=1
+		o-=1
+	return o
+
+
+
+
+def popcnt(n):
+	o=0
+	while (n):
+		if (n&1):
+			o+=1
+		n>>=1
 	return o
 
 
 
 def solve(b,*l):
-	o=[]
+	vl=0
+	mx=0
 	v=[]
+	vl=0
 	vm=[]
 	vml=0
-	a=[]
 	for k in l:
-		e=[0 for _ in range(0,len(v))]
-		for se in k.split("^"):
-			if (se not in v):
-				while (len(vm)<len(se)):
-					vm.append([])
-					vml+=1
-				vm[len(se)-1].append((se,len(v)))
-				o.append(None)
-				v.append(se)
-				e.append(1)
-			else:
-				e[v.index(se)]=1
-		a.append(e)
-	for k in a:
-		for _ in range(0,len(v)-len(k)):
-			k.append(0)
+		for e in k:
+			if (e not in v):
+				v.append(e)
+				vl+=1
+			i=popcnt(e)
+			if (i>vl):
+				vl=i
+			while (vml<i):
+				vm.append([])
+				vml+=1
+			if (e not in vm[i-1]):
+				vm[i-1].append(e)
+			mx|=e
+	if (mx&(mx+1)):
+		raise RuntimeError("Not All Identifiers Used")
+	mx_sz=bsr(mx)+1
+	o=0
+	om=mx
+	a=[0 for _ in range(0,len(b))]
+	for i,k in enumerate(l):
+		for e in k:
+			a[i]|=1<<v.index(e)
 	while (True):
-		s=_solve_xor([e[:] for e in a],b[:])
+		na=a[:]
+		i=0
+		for j in range(0,vl):
+			mx=i
+			mx_v=na[i]&(1<<j)
+			while (mx_v==0):
+				mx+=1
+				if (mx==len(a)):
+					break
+				mx_v=na[mx]&(1<<j)
+			if (mx_v!=0):
+				t=na[mx]
+				na[mx]=na[i]
+				na[i]=t
+				for k in range(i+1,len(a)):
+					if (na[k]&(1<<j)):
+						na[k]=(na[k]&(~(1<<j)))^na[i]
+				i+=1
+				if (i==len(a)):
+					break
+		s=0
+		for i in range(0,len(a)):
+			for j in range(0,vl):
+				s^=(b[i]&(na[i]>>j))<<j
 		if (vml==1):
-			for i in range(0,len(v)):
-				if (o[i] is None):
-					o[i]=s[i]
-			om={}
-			for i,k in enumerate(v):
-				if (len(k)==1):
-					om[k]=o[i]
-			return om
-		for k in vm[vml-1]:
-			if (s[k[1]]==1):
-				i=v.index(k[0])
-				o[i]=1
-				for j in range(0,len(a)):
-					if (a[j][i]==1):
-						a[j][i]=0
-						b[j]^=1
-				for e in k[0]:
-					i=v.index(e)
-					o[i]=1
+			return o|(s&om)
+		vml-=1
+		for k in vm[vml]:
+			m=1<<v.index(k)
+			if (s&m):
+				for i in range(0,len(a)):
+					if (a[i]&m):
+						a[i]&=~m
+						b[i]^=1
+				while (k):
+					i=1<<bsf(k)
+					k&=~i
+					om&=~i
+					o|=i
+					m=1<<v.index(i)
 					for j in range(0,len(a)):
-						if (a[j][i]==1):
-							a[j][i]=0
+						if (a[j]&m):
+							a[j]&=~m
 							b[j]^=1
 			else:
-				print("Unknown Combination!")
-		vml-=1
-		while (len(vm[vml-1])==0):
+				print("Unknown Combination")
+		while (len(vm[vml])==0):
 			vml-=1
 
 
 
-print(solve([0,1],"a^b^c","a^b^ab"))
+o=solve([1,0],[1,2,3],[1,2,4])
+print(f"a^b^(a&b)=1, a^b^c=0 -> a={o&1}, b={(o>>1)&1}, c={o>>2}")
+
