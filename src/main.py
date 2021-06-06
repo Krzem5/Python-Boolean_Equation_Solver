@@ -22,6 +22,8 @@ def _solve_xor(a,b):
 			i+=1
 			if (i==m):
 				break
+		else:
+			print("AAA")
 	o=[0 for _ in range(0,n)]
 	for i in range(0,m):
 		for j in range(0,n):
