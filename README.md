@@ -1,1 +1,1 @@
-# Python - Nor Equation Solver
+# Python - Boolean Equation Solver
