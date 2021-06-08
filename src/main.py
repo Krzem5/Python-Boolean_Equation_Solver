@@ -3,6 +3,13 @@ def alloc(n):
 
 
 
+def realloc(a,l):
+	while (len(a)<l):
+		a.append(None)
+	return a
+
+
+
 def __bsf(n):
 	o=0
 	while (not (n&1)):
@@ -32,58 +39,84 @@ def __parity(n):
 
 
 
-def solve(b,*l):
-	vl=0
+def solve(A,b):
+	w=len(A)
+	h=len(A[0])
 	mx=0
-	v=[]
-	vl=0
-	vm=[]
-	vml=0
-	for k in l:
-		for e in k:
-			if (e not in v):
-				v.append(e)
-				vl+=1
-			i=__popcnt(e)
-			if (i>vl):
-				vl=i
-			while (vml<i):
-				vm.append([])
-				vml+=1
-			if (e not in vm[i-1]):
-				vm[i-1].append(e)
+	mx_sz=0
+	vi=[]
+	vil=0
+	for i in range(0,w):
+		for j in range(0,h):
+			e=A[i][j]
+			if (not (e&(e-1))):
+				k=__bsf(e)+1
+				if (k>mx_sz):
+					mx_sz=k
+			else:
+				k=__popcnt(e)-2
+				if (k<=vil):
+					vil=k+1
+					vi=realloc(vi,vil)
+					vi[k]=1
+				else:
+					vi[k]+=1
 			mx|=e
 	if (mx&(mx+1)):
 		raise RuntimeError("Not All Identifiers Used")
+	vil+=1
+	vi=realloc(vi,vil)
+	off=0
+	for i in range(0,vil-1):
+		j=vi[i]
+		vi[i]=off
+		off+=j
+	vi[vil-1]=off
 	o=0
 	om=mx
-	sz=len(l)
-	a=alloc(sz)
-	na=alloc(sz)
-	for i,k in enumerate(l):
+	a=alloc(w)
+	na=alloc(w)
+	v=alloc(off)
+	for i in range(0,off):
+		v[i]=0
+	for i in range(0,w):
 		a[i]=0
-		for e in k:
-			a[i]|=1<<v.index(e)
+		for j in range(0,h):
+			e=A[i][j]
+			if (not (e&(e-1))):
+				a[i]|=e
+			else:
+				k=__popcnt(e)-2
+				for l in range(vi[k],vi[k+1]):
+					if (v[l]==0):
+						a[i]|=1<<(l+mx_sz)
+						v[l]=e
+						break
+					if (v[l]==e):
+						a[i]|=1<<(l+mx_sz)
+						break
 		na[i]=a[i]
 	while (True):
 		i=0
 		m=1
-		for j in range(0,vl):
+		for j in range(0,off+mx_sz):
 			k=i
 			t=na[i]
+			sk=False
 			while (not (t&m)):
 				k+=1
-				if (k==len(a)):
+				if (k==w):
+					sk=True
 					break
 				t=na[k]
-			if (t&m):
+			if (not sk):
 				na[k]=na[i]
 				na[i]=t
-				for k in range(i+1,sz):
+				for k in range(i+1,w):
 					if (na[k]&m):
 						na[k]^=na[i]^m
 				i+=1
-				if (i==len(a)):
+				if (i==w):
 					break
 			m<<=1
 		s=0
@@ -91,33 +124,35 @@ def solve(b,*l):
 		while (m):
 			s^=na[__bsf(m)]
 			m&=m-1
-		if (vml==1):
+		if (vil==0):
 			return o|(s&om)
-		rm=True
-		for k in vm[vml-1]:
-			m=1<<v.index(k)
+		f=0
+		for i in range(vi[vil-2],vi[vil-1]):
+			k=v[i]
+			if (k==0):
+				continue
+			m=1<<(i+mx_sz)
 			if (s&m):
-				om&=~k
+				f|=2
+				v[i]=0
 				o|=k
-				while (k):
-					m|=1<<v.index(k&(-k))
-					k&=k-1
+				om&=~k
+				m|=k
 				im=~m
-				for i in range(0,sz):
-					b^=__parity(a[i]&m)<<i
-					a[i]&=im
+				for j in range(0,w):
+					b^=__parity(a[j]&m)<<j
+					a[j]&=im
 			else:
-				rm=False
-				print("Unknown Combination")
-		if (rm):
-			vml-=1
-			while (len(vm[vml])==0):
-				vml-=1
-		for i in range(0,sz):
+				f|=1
+		if (not (f&1)):
+			vil-=1
+		elif (not (f&2)):
+			raise RuntimeError("Guess And Variables")
+		for i in range(0,w):
 			na[i]=a[i]
 
 
 
-o=solve(0b01,[0b001,0b010,0b011],[0b001,0b010,0b100])
+o=solve([[0b001,0b010,0b011],[0b001,0b010,0b100]],0b01)
 print(f"a^b^(a&b)=1, a^b^c=0 -> a={o&1}, b={(o>>1)&1}, c={o>>2}")
 
