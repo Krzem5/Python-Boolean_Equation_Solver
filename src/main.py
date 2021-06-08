@@ -147,7 +147,7 @@ def solve(A,b):
 		if (not (f&1)):
 			vil-=1
 		elif (not (f&2)):
-			raise RuntimeError("Guess And Variables")
+			raise RuntimeError("Guess 'and' Variables")
 		for i in range(0,w):
 			na[i]=a[i]
 
