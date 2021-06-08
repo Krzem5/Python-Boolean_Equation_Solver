@@ -4,6 +4,8 @@ def alloc(n):
 
 
 def realloc(a,l):
+	if (a is None):
+		return alloc(l)
 	while (len(a)<l):
 		a.append(None)
 	return a
@@ -44,7 +46,7 @@ def solve(A,b):
 	h=len(A[0])
 	mx=0
 	mx_sz=0
-	vi=[]
+	vi=None
 	vil=0
 	for i in range(0,w):
 		for j in range(0,h):
