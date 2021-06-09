@@ -46,8 +46,8 @@ def solve(A,b):
 	h=len(A[0])
 	mx=0
 	mx_sz=0
-	vi=None
-	vil=0
+	vi=alloc(1)
+	vil=1
 	for i in range(0,w):
 		for j in range(0,h):
 			e=A[i][j]
@@ -57,17 +57,17 @@ def solve(A,b):
 					mx_sz=k
 			else:
 				k=__popcnt(e)-2
-				if (k<=vil):
-					vil=k+1
-					vi=realloc(vi,vil)
+				if (k<vil):
+					vi=realloc(vi,k+2)
+					for l in range(vil,k+1):
+						vi[l]=0
+					vil=k+2
 					vi[k]=1
 				else:
 					vi[k]+=1
 			mx|=e
 	if (mx&(mx+1)):
 		raise RuntimeError("Not All Identifiers Used")
-	vil+=1
-	vi=realloc(vi,vil)
 	off=0
 	for i in range(0,vil-1):
 		j=vi[i]
